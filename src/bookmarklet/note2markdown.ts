@@ -5,13 +5,8 @@
  * @license MIT
  */
 
-import {
-  brTag2n,
-  getLast,
-  imgTag2md,
-  toQuotedMd,
-} from "src/utils/generic_utils";
-import { getDialog, showDialog } from "src/utils/dialog_utils";
+import { brTag2n, getLast, imgTag2md, toQuotedMd } from "utils/generic_utils";
+import { getDialog, showDialog } from "utils/dialog_utils";
 
 const note2markdown = function (): void {
   /* <--- Get Note Editor --- */
