@@ -3,10 +3,13 @@
  * @author Shuto Iwasaki <https://github.com/iwasakishuto>
  * @copyright Shuto Iwasaki 2021
  * @license MIT
+ * @property ID_SPREAD_SHEET_SHIFT ID for Shift Spread Sheet.
+ * @property ID_SPREAD_SHEET_GUEST ID for Guest Spread Sheet.
+ * @property SLACK_WEBHOOK_URL URL for Slack Incoming Webhook.
  */
 
 import { SlackInfo, name2slackMention, post2slack } from "utils/slack_utils";
-import { getDayOfWeek, toMMdd } from "utils/datetime_utils";
+import { date2str, getDayOfWeek } from "utils/datetime_utils";
 
 /** @global スプシ内の名前からslack内でのIDへの辞書 */
 const LabCafeSlackInformation: SlackInfo[] = [
@@ -33,27 +36,12 @@ const SSID_SHIFT: string = prop.getProperty("ID_SPREAD_SHEET_SHIFT")!;
 const SSID_GUEST: string = prop.getProperty("ID_SPREAD_SHEET_GUEST")!;
 const SlackWebhookUrl: string = prop.getProperty("WEBHOOK_URL")!;
 
-/**
- * @summary Dateオブジェクトからその日に参照すべきスプレッドシートの名前取得する。
- * @param {Date} date Dateオブジェクト。
- * @return {string} 月名（MM月）
- */
-export function getTargetSheetName(date: Date): string {
-  var month: number = Number(date.getMonth() + 1);
-  var day: number = Number(date.getDate());
-  if (day > 25) {
-    month = month == 12 ? 1 : month + 1;
-  }
-  return `${Number(month)}月`;
-  // return `${("0" + month).slice(-2)}月`;
-}
-
 /** @summary スケジューラーに登録するメイン関数 */
 function main() {
   const date: Date = new Date();
-  const today: string = toMMdd(date);
+  const today_str: string = date2str({ date: date, format: "MM/dd" });
   const dayOfweek: string = getDayOfWeek(date);
-  const sheet_name: string = getTargetSheetName(date);
+  const sheet_name: string = date2str({ date: date, format: "yyyyMM" });
   const TargetSheet: GoogleAppsScript.Spreadsheet.Sheet =
     SpreadsheetApp.openById(SSID_SHIFT).getSheetByName(sheet_name)!;
 
@@ -65,7 +53,10 @@ function main() {
   var targetColumn = -1;
   for (let c = 1; c <= LastColumn; c++) {
     let date_cell = TargetSheet.getRange(1, c).getValue();
-    if (date_cell instanceof Date && today == toMMdd(date_cell)) {
+    if (
+      date_cell instanceof Date &&
+      today_str == date2str({ date: date_cell })
+    ) {
       targetColumn = c;
       break;
     }
@@ -123,7 +114,7 @@ function main() {
 
   post2slack({
     webhookurl: SlackWebhookUrl,
-    text: `【${today}(${dayOfweek})】
+    text: `【${today_str}(${dayOfweek})】
     営業時間　： *${business_hours}*
     営業責任者： ${executive}
     スタッフ　： ${staffNames.join("・")}

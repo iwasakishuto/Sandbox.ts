@@ -7,6 +7,7 @@ module.exports = {
   context: __dirname,
   entry: {
     "LabCafe-shift": "./src/gas/LabCafe-shift.ts",
+    "LabCafe-guest": "./src/gas/LabCafe-guest.ts",
   },
   output: {
     path: path.join(__dirname, "gas"),

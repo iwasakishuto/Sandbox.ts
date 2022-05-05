@@ -18,6 +18,16 @@ export function name2slackMention({
   return `<@${slackInformation.find((e) => e.name === name)?.slackId}>`;
 }
 
+export function addSlackLink({
+  text,
+  link,
+}: {
+  text: string;
+  link: string;
+}): string {
+  return `<${link}|${text}>`;
+}
+
 /**
  * @summary Slackにテキストメッセージを送る。
  * @param {string} text メッセージテキスト
@@ -33,8 +43,8 @@ export function post2slack({
 }: {
   text: string;
   webhookurl: string;
-  channel: string;
-  username: string;
+  channel?: string;
+  username?: string;
 }): string {
   let response: GoogleAppsScript.URL_Fetch.HTTPResponse = UrlFetchApp.fetch(
     webhookurl,
