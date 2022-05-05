@@ -14,7 +14,7 @@ A bookmarklet is a bookmark stored in a web browser that contains JavaScript com
 
 ### How to create Bookmarklets??
 
-typescript --[browserify]--> javascript(node.js) -> javascript(browser)
+typescript --[browserify]--> javascript(node.js) -> javascript(browser  @ `/bookmarklet` )
 
 ```sh
 
@@ -24,5 +24,21 @@ $ npx tsc
 
 # Javascript(Node.js) --> Javascript(Browser)
 
-$ browserify main.js -o app.js
-``
+$ browserify dist/bookmarklet/hoge.js -o bookmarklet/hoge.js
+```
+
+### How to create GAS??
+
+typescript --[webpack]--> javascript( @ `/gas` ) --[clasp]-> GAS
+
+```sh
+
+# TypeScript --> JavaScript
+
+$ npm webpack
+
+# Javascript --> GAS
+
+$ cd gas/LabCafe-shift
+$ clasp push
+```
