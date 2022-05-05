@@ -3,6 +3,173 @@ function main() {
 /******/ 	"use strict";
 /******/ 	var __webpack_modules__ = ({
 
+/***/ "./src/gas/lib/labcafe_utils.ts":
+/*!**************************************!*\
+  !*** ./src/gas/lib/labcafe_utils.ts ***!
+  \**************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getGuestInformation = exports.LabCafeGuestInfo2string = exports.getShiftInformation = exports.LabCafeSlackInformation = void 0;
+const slack_utils_1 = __webpack_require__(/*! utils/slack_utils */ "./src/utils/slack_utils.ts");
+const datetime_utils_1 = __webpack_require__(/*! utils/datetime_utils */ "./src/utils/datetime_utils.ts");
+/** @global スプシ内の名前からslack内でのIDへの辞書 */
+exports.LabCafeSlackInformation = [
+    { name: "石橋", slackId: "U03DQQ14F17" },
+    { name: "大野", slackId: "U03E7RHTJHE" },
+    { name: "南雲", slackId: "U03DENW1JKW" },
+    // { name: "宮田", slackId: "UNA68UK7U" },
+    // { name: "岡本", slackId: "US8GFHXMW" },
+    { name: "紺野", slackId: "U03C3JW67RV" },
+    { name: "河村", slackId: "U038N75F0QG" },
+    { name: "王", slackId: "U03D851GRGE" },
+    { name: "安田", slackId: "U03D5FZT9QE" },
+    { name: "新倉", slackId: "U03DC5LRW11" },
+    { name: "宮下", slackId: "U03D5G07PSS" },
+    { name: "岩崎", slackId: "U03DC7T4E4S" },
+    { name: "吉田", slackId: "U038041DAAE" },
+    { name: "佐藤", slackId: "U03D5G0GJQN" },
+];
+function getShiftInformation({ date, sheet, }) {
+    const date_str = (0, datetime_utils_1.date2str)({ date: date, format: "MM/dd" });
+    const dayOfweek = (0, datetime_utils_1.getDayOfWeek)(date);
+    /**
+     * @note 一番上の列に日付が格納されている。
+     * @summary 今日営業があるか。ある場合どの列にそのデータがあるか
+     */
+    const LastColumn = sheet.getLastColumn();
+    var targetColumn = -1;
+    for (let c = 1; c <= LastColumn; c++) {
+        let date_cell = sheet.getRange(1, c).getValue();
+        if (date_cell instanceof Date &&
+            date_str == (0, datetime_utils_1.date2str)({ date: date_cell, format: "MM/dd" })) {
+            targetColumn = c;
+            break;
+        }
+    }
+    if (targetColumn == -1)
+        return null;
+    /**
+     * @note 営業時間は、二行目に格納されている。
+     */
+    const hoursRow = 2;
+    const business_hours = sheet
+        .getRange(hoursRow, targetColumn)
+        .getValue();
+    /**
+     * @note 勤務に入るスタッフの背景色は "#ffffff" ではない。
+     * @summary スタッフのIDを調べる。
+     */
+    var staffNames = [];
+    var executive = "";
+    const LastRow = sheet.getLastRow();
+    const nameColumn = 1;
+    for (let r = 3; r <= LastRow; r++) {
+        let cell = sheet.getRange(r, targetColumn);
+        let value = cell.getValue();
+        let bgcolor = cell.getBackground();
+        let staffName = sheet.getRange(r, nameColumn).getValue();
+        // 白背景じゃない === 営業スタッフ と識別。
+        if ((bgcolor !== "#ffffff" && staffName !== "佐藤") ||
+            (value === "○" && staffName === "佐藤")) {
+            staffNames.push((0, slack_utils_1.name2slackMention)({
+                name: staffName,
+                slackInformation: exports.LabCafeSlackInformation,
+            }));
+        }
+        // 営業責任者は、名前が書いてあるので抽出
+        if (value &&
+            exports.LabCafeSlackInformation.find((e) => e.name === value) !== undefined) {
+            executive = (0, slack_utils_1.name2slackMention)({
+                name: value,
+                slackInformation: exports.LabCafeSlackInformation,
+            });
+            let idx = staffNames.indexOf(executive);
+            if (idx != -1)
+                staffNames.splice(idx, 1);
+        }
+    }
+    const ret = {
+        date_str: date_str,
+        dayOfweek: dayOfweek,
+        business_hours: business_hours,
+        executive: executive,
+        staffNames: staffNames,
+    };
+    return ret;
+}
+exports.getShiftInformation = getShiftInformation;
+function LabCafeGuestInfo2string(info) {
+    return `${info.isNew ? "☆" : "　"}【 *${info.num}* 人】：${info.names}（ *備考* ：${info.remarks}）`;
+}
+exports.LabCafeGuestInfo2string = LabCafeGuestInfo2string;
+function getGuestInformation({ date, sheet, }) {
+    const date_str = (0, datetime_utils_1.date2str)({ date: date, format: "MM/dd" });
+    const dayOfweek = (0, datetime_utils_1.getDayOfWeek)(date);
+    /**
+     * @note 一番上の列に日付が格納されている。
+     * @summary シフトの情報があるか。ある場合どの列にそのデータがあるか
+     */
+    const LastColumn = sheet.getLastColumn();
+    var targetColumn = -1;
+    for (let c = 1; c <= LastColumn; c++) {
+        let date_cell = sheet.getRange(1, c).getValue();
+        if (date_cell instanceof Date &&
+            date_str == (0, datetime_utils_1.date2str)({ date: date_cell, format: "MM/dd" })) {
+            targetColumn = c;
+            break;
+        }
+    }
+    if (targetColumn == -1)
+        return null;
+    /**
+     * @note
+     */
+    const NColsPerDay = 5;
+    const NRowsMeta = 2;
+    const IdxRowTotalNumCounter = 1;
+    const IdxColNumGuestsCounter = 0;
+    const IdxColNumNewGuestsCounter = 1;
+    const IdxColGuestsName = 2;
+    const IdxColGuestsInvitees = 3;
+    const IdxColGuestsRemarks = 4;
+    const num_total_new_guests = sheet
+        .getRange(IdxRowTotalNumCounter, targetColumn - (2 - IdxColNumNewGuestsCounter))
+        .getValue();
+    const num_total_guests = sheet
+        .getRange(IdxRowTotalNumCounter, targetColumn - (2 - IdxColNumGuestsCounter))
+        .getValue();
+    const LastRow = sheet.getLastRow();
+    const data = sheet
+        .getRange(NRowsMeta + 1, targetColumn - 2, LastRow, NColsPerDay)
+        .getValues();
+    var guests_info = [];
+    for (let r = 0; r <= LastRow; r++) {
+        let row = data[r];
+        if (row === null || row[IdxColNumGuestsCounter] === "")
+            break;
+        guests_info.push({
+            isNew: row[IdxColNumNewGuestsCounter],
+            num: row[IdxColNumGuestsCounter],
+            names: row[IdxColGuestsName],
+            remarks: row[IdxColGuestsRemarks],
+        });
+    }
+    const ret = {
+        date_str: date_str,
+        dayOfweek: dayOfweek,
+        num_total_guests: num_total_guests,
+        num_total_new_guests: num_total_new_guests,
+        guests: guests_info,
+    };
+    return ret;
+}
+exports.getGuestInformation = getGuestInformation;
+
+
+/***/ }),
+
 /***/ "./src/utils/datetime_utils.ts":
 /*!*************************************!*\
   !*** ./src/utils/datetime_utils.ts ***!
@@ -152,25 +319,9 @@ var exports = __webpack_exports__;
  * @property SSLINK_SHIFT: Link for Shift Spread Sheet.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+const labcafe_utils_1 = __webpack_require__(/*! gas/lib/labcafe_utils */ "./src/gas/lib/labcafe_utils.ts");
 const slack_utils_1 = __webpack_require__(/*! utils/slack_utils */ "./src/utils/slack_utils.ts");
 const datetime_utils_1 = __webpack_require__(/*! utils/datetime_utils */ "./src/utils/datetime_utils.ts");
-/** @global スプシ内の名前からslack内でのIDへの辞書 */
-const LabCafeSlackInformation = [
-    { name: "石橋", slackId: "U03DQQ14F17" },
-    { name: "大野", slackId: "U03E7RHTJHE" },
-    { name: "南雲", slackId: "U03DENW1JKW" },
-    // { name: "宮田", slackId: "UNA68UK7U" },
-    // { name: "岡本", slackId: "US8GFHXMW" },
-    { name: "紺野", slackId: "U03C3JW67RV" },
-    { name: "河村", slackId: "U038N75F0QG" },
-    { name: "王", slackId: "U03D851GRGE" },
-    { name: "安田", slackId: "U03D5FZT9QE" },
-    { name: "新倉", slackId: "U03DC5LRW11" },
-    { name: "宮下", slackId: "U03D5G07PSS" },
-    { name: "岩崎", slackId: "U03DC7T4E4S" },
-    { name: "吉田", slackId: "U038041DAAE" },
-    { name: "佐藤", slackId: "U03D5G0GJQN" },
-];
 /** @global プロパティに保存されたデータ */
 const prop = PropertiesService.getScriptProperties();
 const SSID_SHIFT = prop.getProperty("ID_SPREAD_SHEET_SHIFT");
@@ -179,68 +330,33 @@ const SSLINK_SHIFT = prop.getProperty("LINK_SPREAD_SHEET_SHIFT");
 const SlackWebhookUrl = prop.getProperty("SLACK_WEBHOOK_URL");
 /** @summary スケジューラーに登録するメイン関数 */
 function main() {
-    const targetDay = (0, datetime_utils_1.getDaysAgo)(-7);
-    const targetDay_str = (0, datetime_utils_1.date2str)({ date: targetDay, format: "MM/dd" });
-    const targetDayOfweek = (0, datetime_utils_1.getDayOfWeek)(targetDay);
-    const sheet_name = (0, datetime_utils_1.date2str)({ date: targetDay, format: "yyyyMM" });
+    const targetDate = (0, datetime_utils_1.getDaysAgo)(-7);
+    const sheet_name = (0, datetime_utils_1.date2str)({ date: targetDate, format: "yyyy-MM" });
     const GuestSheet = SpreadsheetApp.openById(SSID_GUEST).getSheetByName(sheet_name);
-    /**
-     * @note 一番上の列に日付が格納されている。
-     * @summary 今日営業があるか。ある場合どの列にそのデータがあるか
-     */
-    const LastColumn = GuestSheet.getLastColumn();
-    var targetColumn = -1;
-    for (let c = 1; c <= LastColumn; c++) {
-        let date_cell = GuestSheet.getRange(1, c).getValue();
-        if (date_cell instanceof Date &&
-            targetDay_str == (0, datetime_utils_1.date2str)({ date: date_cell, format: "MM/dd" })) {
-            targetColumn = c;
-            break;
-        }
-    }
-    if (targetColumn == -1)
-        return;
-    /**
-     * @note
-     */
-    const NColsPerDay = 5;
-    const NRowsMeta = 2;
-    const IdxRowTotalNumCounter = 1;
-    const IdxColNumGuestsCounter = 0;
-    const IdxColNumNewGuestsCounter = 1;
-    const IdxColGuestsName = 2;
-    const IdxColGuestsInvitees = 3;
-    const IdxColGuestsRemarks = 4;
-    const num_total_new_guests = GuestSheet.getRange(IdxRowTotalNumCounter, targetColumn - (2 - IdxColNumGuestsCounter)).getValue();
-    const num_total_guests = GuestSheet.getRange(IdxRowTotalNumCounter, targetColumn - (2 - IdxColNumNewGuestsCounter)).getValue();
-    const LastRow = GuestSheet.getLastRow();
-    const data = GuestSheet.getRange(NRowsMeta + 1, targetColumn - 2, LastRow, NColsPerDay).getValues();
-    var guests_info = [];
-    for (let r = 0; r <= LastRow; r++) {
-        let row = data[r];
-        if (row === null || row[IdxColNumGuestsCounter] === "")
-            break;
-        guests_info.push(`${row[IdxColNumNewGuestsCounter] ? "☆" : "　"}【 *${row[IdxColNumGuestsCounter]}* 人】：${row[IdxColGuestsName]}（ *備考* ：${row[IdxColGuestsRemarks]}）`);
-    }
-    // const sns_in_charge: string =
-    //   staffNames[Math.floor(Math.random() * staffNames.length)];
-    (0, slack_utils_1.post2slack)({
-        webhookurl: SlackWebhookUrl,
-        text: `ゲスト人数： *${num_total_guests}*
-初来店の方： *${num_total_new_guests}*
+    const guestsInfo = (0, labcafe_utils_1.getGuestInformation)({
+        date: targetDate,
+        sheet: GuestSheet,
+    });
+    if (guestsInfo != null) {
+        (0, slack_utils_1.post2slack)({
+            webhookurl: SlackWebhookUrl,
+            text: `ゲスト人数： *${guestsInfo.num_total_guests}*
+初来店の方： *${guestsInfo.num_total_new_guests}*
 -------------------
-${guests_info.join("\n")}
+${guestsInfo.guests
+                .map((info) => (0, labcafe_utils_1.LabCafeGuestInfo2string)(info))
+                .join("\n")}
 -------------------
 ※ 当日のシフトは ${(0, slack_utils_1.addSlackLink)({
-            text: "ここ",
-            link: SSLINK_SHIFT,
-        })} を参照。
+                text: "ここ",
+                link: SSLINK_SHIFT,
+            })} を参照。
 `,
-        channel: "#102-ゲスト",
-        // channel: "#973_times_shuto",
-        // ストーリー： ${sns_in_charge}
-        username: `${targetDay_str}(${targetDayOfweek})のゲスト`,
-    });
+            channel: "#102-ゲスト",
+            // channel: "#973_times_shuto",
+            username: `${guestsInfo.date_str}(${guestsInfo.dayOfweek})のゲスト`,
+        });
+    }
 }
 __webpack_require__.g.main = main;
 
