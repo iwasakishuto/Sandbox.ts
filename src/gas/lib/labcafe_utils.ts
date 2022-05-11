@@ -17,6 +17,9 @@ export const LabCafeSlackInformation: SlackInfo[] = [
   { name: "岩崎", slackId: "U03DC7T4E4S" },
   { name: "吉田", slackId: "U038041DAAE" },
   { name: "佐藤", slackId: "U03D5G0GJQN" },
+  { name: "Alvin", slackId: "U03DEJ6EEA0" },
+  { name: "アリス", slackId: "U03CXH8HQBZ" },
+  { name: "コム", slackId: "U03CXH7Q99V" },
 ];
 
 export type LabCafeShiftInfo = {

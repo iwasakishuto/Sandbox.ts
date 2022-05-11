@@ -1,11 +1,11 @@
 /**
  * @file スプシに書かれている情報を元に、slackで勤務者をメンションする。
  * @author Shuto Iwasaki <https://github.com/iwasakishuto>
- * @copyright Shuto Iwasaki 2021
+ * @copyright Shuto Iwasaki 2022
  * @license MIT
- * @property ID_SPREAD_SHEET_SHIFT ID for Shift Spread Sheet.
- * @property ID_SPREAD_SHEET_GUEST ID for Guest Spread Sheet.
- * @property SLACK_WEBHOOK_URL URL for Slack Incoming Webhook.
+ * @property ID_SPREAD_SHEET_SHIFT: ID for Shift Spread Sheet.
+ * @property ID_SPREAD_SHEET_GUEST: ID for Guest Spread Sheet.
+ * @property SLACK_WEBHOOK_URL: URL for Slack Incoming Webhook.
  */
 
 import {

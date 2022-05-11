@@ -20,3 +20,18 @@ export function imgTag2md(img: HTMLImageElement) {
 export function getLast(list: any[] | NodeListOf<Element>): any {
   return list[list.length - 1];
 }
+
+/**
+ * @summary URL encoding for django-API
+ * @return {String} Encoded URL string.
+ */
+export function urlencode({ ...params }): string {
+  var queries: string[] = [];
+  Object.entries(params).forEach((e) => {
+    const [key, value] = e;
+    if (value) {
+      queries.push(`${key}=${value}`);
+    }
+  });
+  return queries.join("&");
+}

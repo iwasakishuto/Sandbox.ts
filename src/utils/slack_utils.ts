@@ -1,3 +1,10 @@
+/**
+ * @file A collection of functions useful for handling Slack.
+ * @author Shuto Iwasaki <cabernet.rock@gmail.com>
+ * @copyright Iwasaki Shuto 2022
+ * @license MIT
+ */
+
 export type SlackInfo = {
   name: string;
   slackId: string;

@@ -10,7 +10,7 @@ export function date2str({
   timeZone = "Asia/Tokyo",
   format = "yyyy-MM-dd HH:mm:ss",
 }: {
-  date: Date;
+  date: Date | GoogleAppsScript.Base.Date;
   timeZone?: string;
   format?: string;
 }): string {
