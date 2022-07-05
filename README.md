@@ -35,7 +35,7 @@ typescript --[webpack]--> javascript( @ `/gas` ) --[clasp]-> GAS
 
 # TypeScript --> JavaScript
 
-$ npm webpack
+$ npm run webpack
 
 # Javascript --> GAS
 

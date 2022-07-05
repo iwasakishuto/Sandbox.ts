@@ -22,7 +22,14 @@ export function name2slackMention({
   name: string;
   slackInformation: SlackInfo[];
 }): string {
-  return `<@${slackInformation.find((e) => e.name === name)?.slackId}>`;
+  let slackId: string | undefined = slackInformation.find(
+    (e) => e.name === name
+  )?.slackId;
+  if (slackId === undefined) {
+    return name;
+  } else {
+    return `<@${slackId}>`;
+  }
 }
 
 export function addSlackLink({

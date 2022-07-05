@@ -65,7 +65,7 @@ function main() {
 初来店： *${guestsInfo.num_total_new_guests}*
 -------------------
 ${guestsInfo.guests
-  .map((info: LabCafeGuestInfo) => LabCafeGuestInfo2string(info))
+  .map((info: LabCafeGuestInfo) => LabCafeGuestInfo2string({ info: info }))
   .join("\n")}`;
   }
 

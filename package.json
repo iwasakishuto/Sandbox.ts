@@ -1,7 +1,7 @@
 {
-  "name": "bookmarklets",
+  "name": "sandbox.ts",
   "version": "1.0.0",
-  "description": "A collection of Bookmarklets.",
+  "description": "A collection of Typescript products.",
   "main": "index.js",
   "directories": {
     "lib": "lib"

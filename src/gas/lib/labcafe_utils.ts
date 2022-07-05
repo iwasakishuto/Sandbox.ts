@@ -9,17 +9,19 @@ export const LabCafeSlackInformation: SlackInfo[] = [
   // { name: "宮田", slackId: "UNA68UK7U" },
   // { name: "岡本", slackId: "US8GFHXMW" },
   { name: "紺野", slackId: "U03C3JW67RV" },
-  { name: "河村", slackId: "U038N75F0QG" }, // ゆりっぺ
+  { name: "河村（有）", slackId: "U038N75F0QG" }, // ゆりっぺ
   { name: "王", slackId: "U03D851GRGE" },
   { name: "安田", slackId: "U03D5FZT9QE" },
   { name: "新倉", slackId: "U03DC5LRW11" },
   { name: "宮下", slackId: "U03D5G07PSS" },
   { name: "岩崎", slackId: "U03DC7T4E4S" },
   { name: "吉田", slackId: "U038041DAAE" },
-  { name: "佐藤", slackId: "U03D5G0GJQN" },
+  { name: "佐藤（菜）", slackId: "U03D5G0GJQN" },
+  { name: "佐藤（光）", slackId: "U03J714GT6Z" },
   { name: "Alvin", slackId: "U03DEJ6EEA0" },
-  { name: "アリス", slackId: "U03CXH8HQBZ" },
-  { name: "コム", slackId: "U03CXH7Q99V" },
+  { name: "河村（若）", slackId: "U03CXH8HQBZ" },
+  { name: "饗場", slackId: "U03CXH7Q99V" },
+  // { name: "Instagram", slackId: "" },
 ];
 
 export type LabCafeShiftInfo = {
@@ -80,10 +82,7 @@ export function getShiftInformation({
     let bgcolor = cell.getBackground();
     let staffName = sheet.getRange(r, nameColumn).getValue();
     // 白背景じゃない === 営業スタッフ と識別。
-    if (
-      (bgcolor !== "#ffffff" && staffName !== "佐藤") ||
-      (value === "○" && staffName === "佐藤")
-    ) {
+    if (bgcolor !== "#ffffff") {
       staffNames.push(
         name2slackMention({
           name: staffName,
@@ -121,17 +120,34 @@ export type LabCafeGuestInfo = {
   num: number;
   names: string;
   remarks: string;
+  beInCharge: string;
 };
 
-export function LabCafeGuestInfo2string(info: LabCafeGuestInfo): string {
-  return `${info.isNew ? "☆" : "　"}【 *${info.num}* 人】：${
-    info.names
-  }（ *備考* ：${info.remarks}）`;
+export function LabCafeGuestInfo2string({
+  info,
+  addRemarks = true,
+  addInCharge = true,
+}: {
+  info: LabCafeGuestInfo;
+  addRemarks?: boolean;
+  addInCharge?: boolean;
+}): string {
+  return (
+    `${info.isNew ? "☆" : "　"}【 *${info.num}* 人】：${info.names}` +
+    (addRemarks ? `（ *備考* ：${info.remarks}）` : "") +
+    (addInCharge
+      ? name2slackMention({
+          name: info.beInCharge,
+          slackInformation: LabCafeSlackInformation,
+        })
+      : "")
+  );
 }
 
 export type LabCafeGuestsInfo = {
   date_str: string;
   dayOfweek: string;
+  event: string;
   num_total_guests: number;
   num_total_new_guests: number;
   guests: LabCafeGuestInfo[];
@@ -168,13 +184,13 @@ export function getGuestInformation({
   /**
    * @note
    */
-  const NColsPerDay: number = 5;
+  const NColsPerDay: number = 6;
   const NRowsMeta: number = 2;
   const IdxRowTotalNumCounter: number = 1;
   const IdxColNumGuestsCounter: number = 0;
   const IdxColNumNewGuestsCounter: number = 1;
   const IdxColGuestsName: number = 2;
-  const IdxColGuestsInvitees: number = 3;
+  const IdxColGuestInCharge: number = 3;
   const IdxColGuestsRemarks: number = 4;
 
   const num_total_new_guests: number = sheet
@@ -188,6 +204,9 @@ export function getGuestInformation({
       IdxRowTotalNumCounter,
       targetColumn - (2 - IdxColNumGuestsCounter)
     )
+    .getValue();
+  const event: string = sheet
+    .getRange(IdxRowTotalNumCounter, targetColumn + 2)
     .getValue();
 
   const LastRow: number = sheet.getLastRow();
@@ -204,12 +223,14 @@ export function getGuestInformation({
       num: row[IdxColNumGuestsCounter],
       names: row[IdxColGuestsName],
       remarks: row[IdxColGuestsRemarks],
+      beInCharge: row[IdxColGuestInCharge],
     });
   }
 
   const ret: LabCafeGuestsInfo = {
     date_str: date_str,
     dayOfweek: dayOfweek,
+    event: event,
     num_total_guests: num_total_guests,
     num_total_new_guests: num_total_new_guests,
     guests: guests_info,

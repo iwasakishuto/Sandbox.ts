@@ -22,14 +22,19 @@ exports.LabCafeSlackInformation = [
     // { name: "宮田", slackId: "UNA68UK7U" },
     // { name: "岡本", slackId: "US8GFHXMW" },
     { name: "紺野", slackId: "U03C3JW67RV" },
-    { name: "河村", slackId: "U038N75F0QG" },
+    { name: "河村（有）", slackId: "U038N75F0QG" },
     { name: "王", slackId: "U03D851GRGE" },
     { name: "安田", slackId: "U03D5FZT9QE" },
     { name: "新倉", slackId: "U03DC5LRW11" },
     { name: "宮下", slackId: "U03D5G07PSS" },
     { name: "岩崎", slackId: "U03DC7T4E4S" },
     { name: "吉田", slackId: "U038041DAAE" },
-    { name: "佐藤", slackId: "U03D5G0GJQN" },
+    { name: "佐藤（菜）", slackId: "U03D5G0GJQN" },
+    { name: "佐藤（光）", slackId: "U03J714GT6Z" },
+    { name: "Alvin", slackId: "U03DEJ6EEA0" },
+    { name: "河村（若）", slackId: "U03CXH8HQBZ" },
+    { name: "饗場", slackId: "U03CXH7Q99V" },
+    // { name: "Instagram", slackId: "" },
 ];
 function getShiftInformation({ date, sheet, }) {
     const date_str = (0, datetime_utils_1.date2str)({ date: date, format: "MM/dd" });
@@ -71,8 +76,7 @@ function getShiftInformation({ date, sheet, }) {
         let bgcolor = cell.getBackground();
         let staffName = sheet.getRange(r, nameColumn).getValue();
         // 白背景じゃない === 営業スタッフ と識別。
-        if ((bgcolor !== "#ffffff" && staffName !== "佐藤") ||
-            (value === "○" && staffName === "佐藤")) {
+        if (bgcolor !== "#ffffff") {
             staffNames.push((0, slack_utils_1.name2slackMention)({
                 name: staffName,
                 slackInformation: exports.LabCafeSlackInformation,
@@ -100,8 +104,15 @@ function getShiftInformation({ date, sheet, }) {
     return ret;
 }
 exports.getShiftInformation = getShiftInformation;
-function LabCafeGuestInfo2string(info) {
-    return `${info.isNew ? "☆" : "　"}【 *${info.num}* 人】：${info.names}（ *備考* ：${info.remarks}）`;
+function LabCafeGuestInfo2string({ info, addRemarks = true, addInCharge = true, }) {
+    return (`${info.isNew ? "☆" : "　"}【 *${info.num}* 人】：${info.names}` +
+        (addRemarks ? `（ *備考* ：${info.remarks}）` : "") +
+        (addInCharge
+            ? (0, slack_utils_1.name2slackMention)({
+                name: info.beInCharge,
+                slackInformation: exports.LabCafeSlackInformation,
+            })
+            : ""));
 }
 exports.LabCafeGuestInfo2string = LabCafeGuestInfo2string;
 function getGuestInformation({ date, sheet, }) {
@@ -126,19 +137,22 @@ function getGuestInformation({ date, sheet, }) {
     /**
      * @note
      */
-    const NColsPerDay = 5;
+    const NColsPerDay = 6;
     const NRowsMeta = 2;
     const IdxRowTotalNumCounter = 1;
     const IdxColNumGuestsCounter = 0;
     const IdxColNumNewGuestsCounter = 1;
     const IdxColGuestsName = 2;
-    const IdxColGuestsInvitees = 3;
+    const IdxColGuestInCharge = 3;
     const IdxColGuestsRemarks = 4;
     const num_total_new_guests = sheet
         .getRange(IdxRowTotalNumCounter, targetColumn - (2 - IdxColNumNewGuestsCounter))
         .getValue();
     const num_total_guests = sheet
         .getRange(IdxRowTotalNumCounter, targetColumn - (2 - IdxColNumGuestsCounter))
+        .getValue();
+    const event = sheet
+        .getRange(IdxRowTotalNumCounter, targetColumn + 2)
         .getValue();
     const LastRow = sheet.getLastRow();
     const data = sheet
@@ -154,11 +168,13 @@ function getGuestInformation({ date, sheet, }) {
             num: row[IdxColNumGuestsCounter],
             names: row[IdxColGuestsName],
             remarks: row[IdxColGuestsRemarks],
+            beInCharge: row[IdxColGuestInCharge],
         });
     }
     const ret = {
         date_str: date_str,
         dayOfweek: dayOfweek,
+        event: event,
         num_total_guests: num_total_guests,
         num_total_new_guests: num_total_new_guests,
         guests: guests_info,
@@ -221,6 +237,12 @@ exports.getDaysAgo = getDaysAgo;
 /***/ ((__unused_webpack_module, exports) => {
 
 
+/**
+ * @file A collection of functions useful for handling Slack.
+ * @author Shuto Iwasaki <cabernet.rock@gmail.com>
+ * @copyright Iwasaki Shuto 2022
+ * @license MIT
+ */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.post2slack = exports.addSlackLink = exports.name2slackMention = void 0;
 /**
@@ -230,7 +252,13 @@ exports.post2slack = exports.addSlackLink = exports.name2slackMention = void 0;
  */
 function name2slackMention({ name, slackInformation = [], }) {
     var _a;
-    return `<@${(_a = slackInformation.find((e) => e.name === name)) === null || _a === void 0 ? void 0 : _a.slackId}>`;
+    let slackId = (_a = slackInformation.find((e) => e.name === name)) === null || _a === void 0 ? void 0 : _a.slackId;
+    if (slackId === undefined) {
+        return name;
+    }
+    else {
+        return `<@${slackId}>`;
+    }
 }
 exports.name2slackMention = name2slackMention;
 function addSlackLink({ text, link, }) {
@@ -316,7 +344,8 @@ var exports = __webpack_exports__;
  * @property ID_SPREAD_SHEET_SHIFT: ID for Shift Spread Sheet.
  * @property ID_SPREAD_SHEET_GUEST: ID for Guest Spread Sheet.
  * @property SLACK_WEBHOOK_URL: URL for Slack Incoming Webhook.
- * @property SSLINK_SHIFT: Link for Shift Spread Sheet.
+ * @property LINK_SPREAD_SHEET_SHIFT: Link for Shift Spread Sheet.
+ * @property LINK_SPREAD_SHEET_GUEST: Link for Guest Spread Sheet.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const labcafe_utils_1 = __webpack_require__(/*! gas/lib/labcafe_utils */ "./src/gas/lib/labcafe_utils.ts");
@@ -324,39 +353,43 @@ const slack_utils_1 = __webpack_require__(/*! utils/slack_utils */ "./src/utils/
 const datetime_utils_1 = __webpack_require__(/*! utils/datetime_utils */ "./src/utils/datetime_utils.ts");
 /** @global プロパティに保存されたデータ */
 const prop = PropertiesService.getScriptProperties();
-const SSID_SHIFT = prop.getProperty("ID_SPREAD_SHEET_SHIFT");
+// const SSID_SHIFT: string = prop.getProperty("ID_SPREAD_SHEET_SHIFT")!;
 const SSID_GUEST = prop.getProperty("ID_SPREAD_SHEET_GUEST");
 const SSLINK_SHIFT = prop.getProperty("LINK_SPREAD_SHEET_SHIFT");
+const SSLINK_GUEST = prop.getProperty("LINK_SPREAD_SHEET_GUEST");
 const SlackWebhookUrl = prop.getProperty("SLACK_WEBHOOK_URL");
 /** @summary スケジューラーに登録するメイン関数 */
 function main() {
-    const targetDate = (0, datetime_utils_1.getDaysAgo)(-7);
-    const sheet_name = (0, datetime_utils_1.date2str)({ date: targetDate, format: "yyyy-MM" });
-    const GuestSheet = SpreadsheetApp.openById(SSID_GUEST).getSheetByName(sheet_name);
-    const guestsInfo = (0, labcafe_utils_1.getGuestInformation)({
-        date: targetDate,
-        sheet: GuestSheet,
-    });
-    if (guestsInfo != null) {
-        (0, slack_utils_1.post2slack)({
-            webhookurl: SlackWebhookUrl,
-            text: `ゲスト人数： *${guestsInfo.num_total_guests}*
-初来店の方： *${guestsInfo.num_total_new_guests}*
--------------------
-${guestsInfo.guests
-                .map((info) => (0, labcafe_utils_1.LabCafeGuestInfo2string)(info))
-                .join("\n")}
--------------------
-※ 当日のシフトは ${(0, slack_utils_1.addSlackLink)({
+    var date = new Date();
+    var text = "";
+    for (let i = 1; i <= 14; i++) {
+        let sheet_name = (0, datetime_utils_1.date2str)({ date: date, format: "yyyy-MM" });
+        let guestSheet = SpreadsheetApp.openById(SSID_GUEST).getSheetByName(sheet_name);
+        if (guestSheet !== null) {
+            let guestsInfo = (0, labcafe_utils_1.getGuestInformation)({
+                date: date,
+                sheet: guestSheet,
+            });
+            if (guestsInfo != null) {
+                text += `${guestsInfo.date_str}(${guestsInfo.dayOfweek})  【${guestsInfo.event}】 ${guestsInfo.num_total_guests}人 ( *☆${guestsInfo.num_total_new_guests}* )\n`;
+            }
+        }
+        date.setDate(date.getDate() + 1);
+    }
+    (0, slack_utils_1.post2slack)({
+        webhookurl: SlackWebhookUrl,
+        text: text +
+            `※ 当日のシフトは ${(0, slack_utils_1.addSlackLink)({
                 text: "ここ",
                 link: SSLINK_SHIFT,
-            })} を参照。
-`,
-            channel: "#102-ゲスト",
-            // channel: "#973_times_shuto",
-            username: `${guestsInfo.date_str}(${guestsInfo.dayOfweek})のゲスト`,
-        });
-    }
+            })} を、ゲストの詳細は${(0, slack_utils_1.addSlackLink)({
+                text: "ここ",
+                link: SSLINK_GUEST,
+            })}を参照。`,
+        channel: "#102-ゲスト",
+        // channel: "#973_times_shuto",
+        username: "現在のゲスト状況",
+    });
 }
 __webpack_require__.g.main = main;
 
